@@ -1,0 +1,99 @@
+<!doctype html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <!-- The above 3 meta tags *must* come first in the head; any other head content must come *after* these tags -->
+    <script src="https://cdn.socket.io/socket.io-1.2.0.js"></script>
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/2.1.3/jquery.min.js"></script>
+    <link rel="stylesheet" href="///maxcdn.bootstrapcdn.com/bootstrap/3.3.5/css/bootstrap.min.css">
+    <link rel="stylesheet" href="///maxcdn.bootstrapcdn.com/bootstrap/3.3.5/css/bootstrap-theme.min.css">
+    <script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.5/js/bootstrap.min.js"></script>
+    <script src="https://code.highcharts.com/highcharts.js"></script>
+    <title>Protonet sensors</title>
+    <style>
+    .container {
+      padding: 0 !important;
+      margin: 0 !important;
+      width: 100% !important;
+    }
+    @media (max-width: 800px) {
+      .page-header {
+        display: none;
+      }
+    }
+    </style>
+</head>
+<body>
+<div class="container">
+  <div class="page-header">
+    <h1>Protonet sensors</h1>
+    <p class="lead">How is the world around me?</p>
+  </div>
+  <div id="chart"></div>
+</div>
+<script>
+    $(window).load(function () {
+        var socket = io(window.location.protocol + '//' + window.location.hostname, {path: window.location.pathname + 'socket.io'});
+        var chart;
+        socket.on('update', function (signal) {
+            var series = chart.get(signal.location);
+            if (!series) {
+                chart.addSeries({id: signal.location, name: signal.location, data: []});
+                series = chart.get(signal.location);
+            }
+            // max number of shown data points
+            var shift = series.data.length > 5000;
+            var today = (new Date()).getTime();
+            series.addPoint([today, parseFloat(signal.status)], true, shift);
+            console.log('Added Point', signal.status, " at location ", signal.location);
+        });
+
+        Highcharts.setOptions({
+            global: {
+                useUTC: false
+            }
+        });
+
+        chart = new Highcharts.Chart({
+            chart: {
+                renderTo: 'chart',
+                type: 'spline',
+                animation: Highcharts.svg, // don't animate in old IE
+                marginRight: 10
+            },
+            title: {
+                text: null
+            },
+            xAxis: {
+                type: 'datetime',
+                tickPixelInterval: 150
+            },
+            yAxis: {
+                title: {
+                    text: "Temperature"
+                },
+                min: 10,
+                startOnTick: false,
+				}
+            },
+            tooltip: {
+                formatter: function () {
+                    return '<b>' + this.series.name + '</b><br/>' +
+                            Highcharts.dateFormat('%Y-%m-%d %H:%M:%S', this.x) + '<br/>' +
+                            Highcharts.numberFormat(this.y, 2);
+                }
+            },
+            legend: {
+                enabled: true
+            },
+            exporting: {
+                enabled: false
+            },
+            series: []
+        });
+    });
+</script>
+</body>
+</html>
