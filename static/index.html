@@ -75,8 +75,14 @@
                     text: "Temperature"
                 },
                 min: 10,
-                startOnTick: false
-				},
+                startOnTick: false,
+				plotLines:
+                    {
+                        value: 0,
+                        width: 1,
+                        color: '#808080'
+                    },
+			},
             tooltip: {
                 formatter: function () {
                     return '<b>' + this.series.name + '</b><br/>' +
